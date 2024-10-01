@@ -53,20 +53,24 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';  // Usa useRouter para manejar las rutas
+
+const router = useRouter();  // Obtén una instancia del router
+
 const handlePlay = () => {
-  // lógica para el botón Jugar
+  router.push('/play');  // Redirige a la página de juego
 };
 
 const handleSettings = () => {
-  // lógica para el botón Configuraciones
+  router.push('/settings');  // Redirige a la página de configuraciones
 };
 
 const handleHowToPlay = () => {
-  // lógica para el botón Cómo Jugar
+  router.push('/instructions');  // Redirige a la página de instrucciones
 };
 
 const handleExit = () => {
-  // lógica para el botón Salir
+  router.push('/');  // Redirige a la página de inicio
 };
 </script>
 
