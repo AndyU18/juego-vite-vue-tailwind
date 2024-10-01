@@ -9,12 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "chalk": "^4.1.2",
     "flowbite": "^2.5.2",
     "gsap": "^3.12.5",
     "kutty": "^0.6.0",
     "typeit": "^8.8.5",
     "vue": "^3.4.37",
-    "vue-router": "^4.4.5"
+    "vue-router": "^4.4.5",
+    "vuesax": "^4.0.1-alpha.25",
+    "vuesax3": "^4.2.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.2",
