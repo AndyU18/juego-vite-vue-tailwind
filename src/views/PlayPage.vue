@@ -43,6 +43,7 @@
   </template>
   
   <script>
+  import colisionSound from '../assets/sounds/colision.mp3';
   export default {
     data() {
       return {
@@ -295,6 +296,10 @@
             // Colisión detectada: eliminar disparo enemigo y reducir vida del jugador
             this.disparosEnemigos.splice(disparoEnemigoIndex, 1);
             this.vidas -= 1;
+
+            // Reproducir sonido de colisión
+            const audio = new Audio(colisionSound);
+            audio.play();
   
             // Cambiar color de la nave a rojo temporalmente
             this.nave.color = 'red';
