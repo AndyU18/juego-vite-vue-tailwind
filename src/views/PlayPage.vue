@@ -1,173 +1,213 @@
 <template>
-  <div class="h-screen w-screen bg-black flex flex-col justify-center items-center relative overflow-hidden">
-    <div class="text-white text-lg mb-4 absolute top-0 left-0 p-4">
-      Tiempo de juego: {{ tiempoJuego }} segundos <br />
-      Puntaje: {{ puntaje }} <br />
-      Vidas: {{ vidas }}
+  <div class="game-container relative mx-auto" :style="{ width: '890px', height: '900px', backgroundColor: '#000' }">
+    <!-- Pantalla del juego donde están las naves -->
+    <div class="game-area relative mx-auto" :style="{ width: '100%', height: '100%' }">
+      <!-- Nave del jugador -->
+      <div
+        class="nave bg-white absolute"
+        :style="{ left: nave.x + 'px', top: nave.y + 'px', width: nave.width + 'px', height: nave.height + 'px' }"
+      ></div>
+
+      <!-- Disparos del jugador -->
+      <div
+        v-for="(disparo, index) in disparos"
+        :key="index"
+        class="disparo bg-red-500 absolute"
+        :style="{ left: disparo.x + 'px', top: disparo.y + 'px', width: '5px', height: '15px' }"
+      ></div>
+
+      <!-- Enemigos -->
+      <div
+        v-for="(enemy, index) in enemigos"
+        :key="enemy.id"
+        class="enemy absolute"
+        :style="{ left: enemy.x + 'px', top: enemy.y + 'px', width: '40px', height: '40px', backgroundColor: getEnemyColor(enemy.tipo) }"
+      ></div>
     </div>
-    
-    <!-- Nave del jugador -->
-    <div
-      class="nave bg-white"
-      :style="{ left: nave.x + 'px', top: nave.y + 'px', width: nave.width + 'px', height: nave.height + 'px' }"
-    ></div>
-    
-    <!-- Balas del jugador -->
-    <div
-      v-for="(bala, index) in balasJugador"
-      :key="index"
-      class="bala bg-white"
-      :style="{ left: bala.x + 'px', top: bala.y + 'px', width: '10px', height: '10px' }"
-    ></div>
 
-    <!-- Enemigos -->
-    <div
-      v-for="(enemy, index) in enemigos"
-      :key="enemy.id"
-      class="enemy"
-      :style="{ left: enemy.x + 'px', top: enemy.y + 'px', width: '40px', height: '40px', backgroundColor: getEnemyColor(enemy.tipo) }"
-    ></div>
-
-    <!-- Balas de enemigos -->
-    <div
-      v-for="(bala, index) in balasEnemigos"
-      :key="index"
-      class="bala-enemiga bg-red-500"
-      :style="{ left: bala.x + 'px', top: bala.y + 'px', width: '10px', height: '10px' }"
-    ></div>
+    <!-- Estadísticas sobre la pantalla del juego -->
+    <div class="stats absolute top-0 left-0 p-4 text-white sixtyfour-convergence">
+      <p>Vidas: {{ vidas }}</p>
+      <p>Tiempo: {{ tiempoConDecimales }} s</p>
+      <p>Puntaje: {{ puntaje }}</p>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue';
-
 export default {
-  setup() {
-    const tiempoJuego = ref(0);
-    const puntaje = ref(0);
-    const vidas = ref(3);
-    const nave = ref({ x: 400, y: 550, velocidad: 10, width: 50, height: 50 });
-    const balasJugador = ref([]);
-    const enemigos = ref([]);
-    const balasEnemigos = ref([]);
-
-    let intervalo;
-
-    onMounted(() => {
-      iniciarJuego();
-      crearEnemigos();
-    });
-
-    onUnmounted(() => {
-      clearInterval(intervalo);
-    });
-
-    const iniciarJuego = () => {
-      intervalo = setInterval(() => {
-        moverBalas();
-        moverEnemigos();
-        verificarColisiones();
-        tiempoJuego.value += 1 / 60;
-      }, 1000 / 60);
+  data() {
+    return {
+      nave: { x: 400, y: 820, width: 40, height: 40, velocidad: 5 }, // Ajustado para estar un poco arriba del borde inferior
+      enemigos: [],
+      disparos: [], // Almacena los disparos activos
+      vidas: 3,
+      tiempo: 0,
+      puntaje: 0,
+      direccionEnemigos: 1, // 1 = derecha, -1 = izquierda
+      intervaloDisparos: null, // Control para los disparos
     };
+  },
+  computed: {
+    tiempoConDecimales() {
+      return (this.tiempo / 100).toFixed(2); // Mostrar el tiempo con dos decimales
+    },
+  },
+  created() {
+    this.crearEnemigos();
+    this.startGameLoop();
+    window.addEventListener('keydown', this.moverNave);
+    window.addEventListener('keydown', this.disparar);
+  },
+  beforeDestroy() {
+    window.removeEventListener('keydown', this.moverNave);
+    window.removeEventListener('keydown', this.disparar);
+  },
+  methods: {
+    // Crear naves enemigas en diferentes filas y tipos
+    crearEnemigos() {
+      const filasEnemigos = [
+        { cantidad: 5, tipo: 'A', y: 50 }, // Ajustado a 5 naves, se centrará
+        { cantidad: 7, tipo: 'B', y: 100 }, // Mantener igual
+        { cantidad: 7, tipo: 'B', y: 150 }, // Mantener igual
+        { cantidad: 6, tipo: 'C', y: 200 }, // Ajustado a 6 naves, se centrará
+        { cantidad: 6, tipo: 'C', y: 250 }, // Ajustado a 6 naves, se centrará
+      ];
 
-    const moverBalas = () => {
-      // Mueve las balas del jugador
-      balasJugador.value.forEach((bala, index) => {
-        bala.y -= 5;
-        if (bala.y < 0) balasJugador.value.splice(index, 1);
+      filasEnemigos.forEach((fila, index) => {
+        const espacio = (890 - fila.cantidad * 40) / 2; // Centramos la fila según el número de naves
+        for (let i = 0; i < fila.cantidad; i++) {
+          this.enemigos.push({
+            id: `enemy-${index}-${i}`,
+            tipo: fila.tipo,
+            x: espacio + i * 60, // Espaciado entre naves
+            y: fila.y,
+          });
+        }
+      });
+    },
+    // Obtener color del enemigo según su tipo
+    getEnemyColor(tipo) {
+      switch (tipo) {
+        case 'A':
+          return 'red';
+        case 'B':
+          return 'blue';
+        case 'C':
+          return 'green';
+        default:
+          return 'gray';
+      }
+    },
+    // Mover la nave del jugador
+    moverNave(event) {
+      if (event.key === 'ArrowLeft') {
+        this.nave.x = Math.max(0, this.nave.x - this.nave.velocidad); // Límite izquierdo
+      } else if (event.key === 'ArrowRight') {
+        this.nave.x = Math.min(850, this.nave.x + this.nave.velocidad); // Límite derecho
+      }
+    },
+    // Disparar con la tecla espacio
+    disparar(event) {
+      if (event.key === ' ') {
+        this.crearDisparo();
+      }
+    },
+    // Crear un disparo desde la posición de la nave del jugador
+    crearDisparo() {
+      const disparo = {
+        x: this.nave.x + this.nave.width / 2 - 2.5, // Centrar el disparo en la nave
+        y: this.nave.y - 15, // Aparece encima de la nave
+        velocidad: 7,
+      };
+      this.disparos.push(disparo);
+    },
+    // Bucle principal del juego
+    startGameLoop() {
+      setInterval(() => {
+        this.moverEnemigos();
+        this.moverDisparos();
+        this.detectarColisiones();
+        this.tiempo += 1; // Suma el tiempo en centésimas de segundo
+      }, 1000 / 60); // 60 FPS
+    },
+    // Mover disparos hacia arriba y eliminar los que salen de la pantalla
+    moverDisparos() {
+      this.disparos.forEach((disparo, index) => {
+        disparo.y -= disparo.velocidad;
+        if (disparo.y < 0) {
+          this.disparos.splice(index, 1); // Eliminar disparo cuando sale de la pantalla
+        }
+      });
+    },
+    // Mover naves enemigas de izquierda a derecha, y viceversa
+    moverEnemigos() {
+      const bordeDerecho = 850; // Límite derecho de la pantalla
+      const bordeIzquierdo = 0; // Límite izquierdo de la pantalla
+
+      // Mover los enemigos en la dirección actual
+      this.enemigos.forEach((enemy) => {
+        enemy.x += this.direccionEnemigos * 2; // Velocidad de los enemigos
       });
 
-      // Mueve las balas de los enemigos
-      balasEnemigos.value.forEach((bala, index) => {
-        bala.y += 3;
-        if (bala.y > 600) balasEnemigos.value.splice(index, 1);
+      // Verificar si algún enemigo ha alcanzado el borde
+      const haTocadoBordeDerecho = this.enemigos.some((enemy) => enemy.x >= bordeDerecho);
+      const haTocadoBordeIzquierdo = this.enemigos.some((enemy) => enemy.x <= bordeIzquierdo);
+
+      if (haTocadoBordeDerecho) {
+        this.direccionEnemigos = -1; // Cambiar dirección hacia la izquierda
+        this.bajarFilaEnemigos();
+      } else if (haTocadoBordeIzquierdo) {
+        this.direccionEnemigos = 1; // Cambiar dirección hacia la derecha
+        this.bajarFilaEnemigos();
+      }
+    },
+    // Bajar los enemigos una fila hacia abajo cuando alcanzan los bordes
+    bajarFilaEnemigos() {
+      this.enemigos.forEach((enemy) => {
+        enemy.y += 20; // Bajar 20px
       });
-    };
-
-    const moverEnemigos = () => {
-      enemigos.value.forEach((enemy) => {
-        enemy.x += enemy.velocidad;
-        if (enemy.x > 760 || enemy.x < 0) enemy.velocidad *= -1;
-      });
-    };
-
-    const disparar = () => {
-      balasJugador.value.push({ x: nave.value.x + 20, y: nave.value.y });
-    };
-
-    const verificarColisiones = () => {
-      balasJugador.value.forEach((bala, balaIndex) => {
-        enemigos.value.forEach((enemy, enemyIndex) => {
+    },
+    // Detectar colisiones entre disparos y enemigos
+    detectarColisiones() {
+      this.disparos.forEach((disparo, disparoIndex) => {
+        this.enemigos.forEach((enemy, enemyIndex) => {
           if (
-            bala.x < enemy.x + 40 &&
-            bala.x + 10 > enemy.x &&
-            bala.y < enemy.y + 40 &&
-            bala.y + 10 > enemy.y
+            disparo.x < enemy.x + 40 &&
+            disparo.x + 5 > enemy.x &&
+            disparo.y < enemy.y + 40 &&
+            disparo.y + 15 > enemy.y
           ) {
-            balasJugador.value.splice(balaIndex, 1);
-            enemigos.value.splice(enemyIndex, 1);
-            puntaje.value += 10;
+            // Colisión detectada
+            this.enemigos.splice(enemyIndex, 1); // Eliminar enemigo
+            this.disparos.splice(disparoIndex, 1); // Eliminar disparo
+            this.puntaje += 100; // Aumentar puntaje
           }
         });
       });
-    };
-
-    const crearEnemigos = () => {
-      let id = 1;
-      for (let i = 0; i < 5; i++) {
-        enemigos.value.push({
-          id: id++,
-          x: 100 + i * 120,
-          y: 50,
-          tipo: 1,
-          velocidad: 1,
-        });
-      }
-    };
-
-    const moverNave = (direccion) => {
-      if (direccion === 'izquierda' && nave.value.x > 0) {
-        nave.value.x -= nave.value.velocidad;
-      } else if (direccion === 'derecha' && nave.value.x < 750) {
-        nave.value.x += nave.value.velocidad;
-      }
-    };
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') moverNave('izquierda');
-      if (e.key === 'ArrowRight') moverNave('derecha');
-      if (e.key === ' ') disparar();
-    });
-
-    return {
-      tiempoJuego,
-      puntaje,
-      vidas,
-      nave,
-      balasJugador,
-      enemigos,
-      balasEnemigos,
-      getEnemyColor(tipo) {
-        return tipo === 1 ? 'blue' : 'red';
-      },
-    };
+    },
   },
 };
 </script>
 
 <style scoped>
+.game-container {
+  position: relative;
+}
+
 .nave {
-  position: absolute;
+  background-color: white;
+}
+
+.disparo {
+  background-color: red;
 }
 
 .enemy {
-  position: absolute;
-  border: 2px solid white;
+  background-color: blue;
 }
 
-.bala,
-.bala-enemiga {
-  position: absolute;
+.sixtyfour-convergence {
+  font-family: 'SixtyFourPixelated', sans-serif;
 }
 </style>
