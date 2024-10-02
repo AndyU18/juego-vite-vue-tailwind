@@ -23,10 +23,18 @@
         class="enemy absolute"
         :style="{ left: enemy.x + 'px', top: enemy.y + 'px', width: '40px', height: '40px', backgroundColor: getEnemyColor(enemy.tipo) }"
       ></div>
+
+      <!-- Disparos de enemigos -->
+      <div
+        v-for="(disparoEnemigo, index) in disparosEnemigos"
+        :key="index"
+        class="disparo-enemigo absolute"
+        :style="{ left: disparoEnemigo.x + 'px', top: disparoEnemigo.y + 'px', width: disparoEnemigo.width + 'px', height: disparoEnemigo.height + 'px', backgroundColor: disparoEnemigo.color }"
+      ></div>
     </div>
 
     <!-- Estadísticas sobre la pantalla del juego -->
-    <div class="stats absolute top-0 left-0 p-4 text-white sixtyfour-convergence">
+    <div class="stats absolute top-0 left-0 p-4 text-white stats-font">
       <p>Vidas: {{ vidas }}</p>
       <p>Tiempo: {{ tiempoConDecimales }} s</p>
       <p>Puntaje: {{ puntaje }}</p>
@@ -40,7 +48,8 @@ export default {
     return {
       nave: { x: 400, y: 820, width: 40, height: 40, velocidad: 5 }, // Ajustado para estar un poco arriba del borde inferior
       enemigos: [],
-      disparos: [], // Almacena los disparos activos
+      disparos: [], // Almacena los disparos del jugador
+      disparosEnemigos: [], // Almacena los disparos de los enemigos
       vidas: 3,
       tiempo: 0,
       puntaje: 0,
@@ -56,6 +65,7 @@ export default {
   created() {
     this.crearEnemigos();
     this.startGameLoop();
+    this.iniciarAtaquesEnemigos(); // Iniciar ataques cada 3 segundos
     window.addEventListener('keydown', this.moverNave);
     window.addEventListener('keydown', this.disparar);
   },
@@ -67,11 +77,11 @@ export default {
     // Crear naves enemigas en diferentes filas y tipos
     crearEnemigos() {
       const filasEnemigos = [
-        { cantidad: 5, tipo: 'A', y: 50 }, // Ajustado a 5 naves, se centrará
-        { cantidad: 7, tipo: 'B', y: 100 }, // Mantener igual
-        { cantidad: 7, tipo: 'B', y: 150 }, // Mantener igual
-        { cantidad: 6, tipo: 'C', y: 200 }, // Ajustado a 6 naves, se centrará
-        { cantidad: 6, tipo: 'C', y: 250 }, // Ajustado a 6 naves, se centrará
+        { cantidad: 5, tipo: 'A', y: 50 },
+        { cantidad: 7, tipo: 'B', y: 100 },
+        { cantidad: 7, tipo: 'B', y: 150 },
+        { cantidad: 6, tipo: 'C', y: 200 },
+        { cantidad: 6, tipo: 'C', y: 250 },
       ];
 
       filasEnemigos.forEach((fila, index) => {
@@ -127,6 +137,7 @@ export default {
       setInterval(() => {
         this.moverEnemigos();
         this.moverDisparos();
+        this.moverDisparosEnemigos();
         this.detectarColisiones();
         this.tiempo += 1; // Suma el tiempo en centésimas de segundo
       }, 1000 / 60); // 60 FPS
@@ -137,6 +148,15 @@ export default {
         disparo.y -= disparo.velocidad;
         if (disparo.y < 0) {
           this.disparos.splice(index, 1); // Eliminar disparo cuando sale de la pantalla
+        }
+      });
+    },
+    // Mover disparos enemigos hacia abajo y eliminarlos cuando salen de la pantalla
+    moverDisparosEnemigos() {
+      this.disparosEnemigos.forEach((disparo, index) => {
+        disparo.y += disparo.velocidad;
+        if (disparo.y > 900) {
+          this.disparosEnemigos.splice(index, 1); // Eliminar disparo enemigo cuando sale de la pantalla
         }
       });
     },
@@ -162,13 +182,90 @@ export default {
         this.bajarFilaEnemigos();
       }
     },
-    // Bajar los enemigos una fila hacia abajo cuando alcanzan los bordes
+    // Bajar las naves enemigas una fila cuando cambian de dirección
     bajarFilaEnemigos() {
       this.enemigos.forEach((enemy) => {
-        enemy.y += 20; // Bajar 20px
+        enemy.y += 20; // Bajamos 20 píxeles
       });
     },
-    // Detectar colisiones entre disparos y enemigos
+    // Iniciar ataques enemigos
+    iniciarAtaquesEnemigos() {
+      this.intervaloDisparos = setInterval(() => {
+        const navesVivas = this.enemigos.filter((enemy) => !enemy.destruido);
+        if (navesVivas.length === 0) return;
+
+        // Seleccionar 2 naves vivas aleatoriamente para disparar
+        const navesSeleccionadas = [];
+        while (navesSeleccionadas.length < 2) {
+          const naveAleatoria = navesVivas[Math.floor(Math.random() * navesVivas.length)];
+          if (!navesSeleccionadas.includes(naveAleatoria)) {
+            navesSeleccionadas.push(naveAleatoria);
+          }
+        }
+
+        // Hacer que las naves seleccionadas disparen
+        navesSeleccionadas.forEach((nave) => this.disparoEnemigo(nave));
+      }, 4500); // Cada 3 segundos
+    },
+    // Generar disparos según el tipo de nave enemiga
+    disparoEnemigo(nave) {
+      if (nave.tipo === 'A') {
+        // Disparo de bala pequeña y rápida
+        this.disparosEnemigos.push({
+          x: nave.x + 20, // Centrar el disparo en la nave
+          y: nave.y + 40,
+          velocidad: 6,
+          width: 5,
+          height: 10,
+          color: 'yellow',
+        });
+      } else if (nave.tipo === 'B') {
+        // Disparo de torpedo
+        this.disparosEnemigos.push({
+          x: nave.x + 20,
+          y: nave.y + 40,
+          velocidad: 4,
+          width: 5,
+          height: 20,
+          color: 'orange',
+        });
+      } else if (nave.tipo === 'C') {
+        // Disparo de escopeta (3 balas con ángulos diferentes)
+        const baseX = nave.x + 20;
+        const baseY = nave.y + 40;
+
+        // Bala central
+        this.disparosEnemigos.push({
+          x: baseX,
+          y: baseY,
+          velocidad: 5,
+          width: 5,
+          height: 15,
+          color: 'lightgreen',
+        });
+
+        // Bala con ángulo a la derecha (30 grados)
+        this.disparosEnemigos.push({
+          x: baseX + 10,
+          y: baseY,
+          velocidad: 5,
+          width: 5,
+          height: 15,
+          color: 'lightgreen',
+        });
+
+        // Bala con ángulo a la izquierda (30 grados)
+        this.disparosEnemigos.push({
+          x: baseX - 10,
+          y: baseY,
+          velocidad: 5,
+          width: 5,
+          height: 15,
+          color: 'lightgreen',
+        });
+      }
+    },
+    // Detectar colisiones entre disparos del jugador y enemigos
     detectarColisiones() {
       this.disparos.forEach((disparo, disparoIndex) => {
         this.enemigos.forEach((enemy, enemyIndex) => {
@@ -178,9 +275,9 @@ export default {
             disparo.y < enemy.y + 40 &&
             disparo.y + 15 > enemy.y
           ) {
-            // Colisión detectada
-            this.enemigos.splice(enemyIndex, 1); // Eliminar enemigo
-            this.disparos.splice(disparoIndex, 1); // Eliminar disparo
+            // Colisión detectada: eliminar enemigo y disparo
+            this.enemigos.splice(enemyIndex, 1);
+            this.disparos.splice(disparoIndex, 1);
             this.puntaje += 100; // Aumentar puntaje
           }
         });
@@ -207,7 +304,11 @@ export default {
   background-color: blue;
 }
 
-.sixtyfour-convergence {
+.disparo-enemigo {
+  background-color: yellow;
+}
+
+.stats-font {
   font-family: 'SixtyFourPixelated', sans-serif;
 }
 </style>
