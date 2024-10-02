@@ -1,4 +1,10 @@
 <template>
+  <div>
+    <!-- Botón para regresar al menú -->
+    <button @click="irAlMenu" class="btn-regresar absolute top-0 left-0 m-4 p-2 bg-gray-800 text-white">
+      Regresar al Menú
+    </button>
+
     <div class="game-container relative mx-auto" :style="{ width: '890px', height: '900px', backgroundColor: '#000' }">
       <!-- Pantalla del juego donde están las naves -->
       <div class="game-area relative mx-auto" :style="{ width: '100%', height: '100%' }">
@@ -7,7 +13,7 @@
           class="nave absolute"
           :style="{ left: nave.x + 'px', top: nave.y + 'px', width: nave.width + 'px', height: nave.height + 'px', backgroundColor: nave.color }"
         ></div>
-  
+
         <!-- Disparos del jugador -->
         <div
           v-for="(disparo, index) in disparos"
@@ -15,7 +21,7 @@
           class="disparo bg-red-500 absolute"
           :style="{ left: disparo.x + 'px', top: disparo.y + 'px', width: '5px', height: '15px' }"
         ></div>
-  
+
         <!-- Enemigos -->
         <div
           v-for="(enemy, index) in enemigos"
@@ -23,7 +29,7 @@
           class="enemy absolute"
           :style="{ left: enemy.x + 'px', top: enemy.y + 'px', width: '35px', height: '35px', backgroundColor: getEnemyColor(enemy.tipo) }"
         ></div>
-  
+
         <!-- Disparos de enemigos -->
         <div
           v-for="(disparoEnemigo, index) in disparosEnemigos"
@@ -32,7 +38,7 @@
           :style="{ left: disparoEnemigo.x + 'px', top: disparoEnemigo.y + 'px', width: disparoEnemigo.width + 'px', height: disparoEnemigo.height + 'px', backgroundColor: disparoEnemigo.color }"
         ></div>
       </div>
-  
+
       <!-- Estadísticas sobre la pantalla del juego -->
       <div class="stats absolute top-0 left-0 p-4 text-white stats-font">
         <p>Vidas: {{ vidas }}</p>
@@ -40,10 +46,13 @@
         <p>Puntaje: {{ puntaje }}</p>
       </div>
     </div>
-  </template>
-  
+  </div>
+</template>  
   <script>
+
   import colisionSound from '../assets/sounds/colision.mp3';
+  import disparoJugadorSound from '../assets/sounds/disparo_jugador.mp3';
+  import disparoEnemigoSound from '../assets/sounds/disparo_enemigo.mp3';
   export default {
     data() {
       return {
@@ -56,6 +65,8 @@
         puntaje: 0,
         direccionEnemigos: 1, // 1 = derecha, -1 = izquierda
         intervaloDisparos: null, // Control para los disparos
+        gameLoopInterval: null, // Control para el bucle del juego
+        juegoActivo: true,
       };
     },
     computed: {
@@ -64,6 +75,7 @@
       },
     },
     created() {
+      this.resetGameState();
       this.crearEnemigos();
       this.startGameLoop();
       this.iniciarAtaquesEnemigos(); // Iniciar ataques cada 3 segundos
@@ -71,10 +83,26 @@
       window.addEventListener('keydown', this.disparar);
     },
     beforeDestroy() {
+        console.log('beforeDestroy called');
+      // Limpiar intervalos y detener lógica del juego
+      
+      clearInterval(this.gameLoopInterval);
+      clearInterval(this.intervaloDisparos);
       window.removeEventListener('keydown', this.moverNave);
       window.removeEventListener('keydown', this.disparar);
     },
     methods: {
+        resetGameState() {
+            this.nave = { x: 400, y: 820, width: 40, height: 40, velocidad: 5, color: 'white' };
+            this.enemigos = [];
+            this.disparos = [];
+            this.disparosEnemigos = [];
+            this.vidas = 3;
+            this.tiempo = 0;
+            this.puntaje = 0;
+            this.direccionEnemigos = 1;
+            this.juegoActivo = true; // Reiniciar la bandera de juego activo
+        },
       // Crear naves enemigas en diferentes filas y tipos
       crearEnemigos() {
         const filasEnemigos = [
@@ -84,7 +112,6 @@
           { cantidad: 6, tipo: 'C', y: 200 },
           { cantidad: 6, tipo: 'C', y: 250 },
         ];
-  
         filasEnemigos.forEach((fila, index) => {
           const espacio = (890 - fila.cantidad * 40) / 2; // Centramos la fila según el número de naves
           for (let i = 0; i < fila.cantidad; i++) {
@@ -97,6 +124,20 @@
           }
         });
       },
+        // Método para regresar al menú
+        irAlMenu() {
+            this.juegoActivo = false;
+
+            // Limpiar intervalos y detener lógica del juego
+            clearInterval(this.gameLoopInterval);
+            clearInterval(this.intervaloDisparos);
+            
+            window.removeEventListener('keydown', this.moverNave);
+            window.removeEventListener('keydown', this.disparar);
+
+            // Navegar al MenuPage
+            this.$router.push({ name: 'MenuPage' });
+        },
       // Obtener color del enemigo según su tipo
       getEnemyColor(tipo) {
         switch (tipo) {
@@ -132,17 +173,24 @@
           velocidad: 7,
         };
         this.disparos.push(disparo);
+
+        // Reproducir sonido de disparo del jugador
+        const audio = new Audio(disparoJugadorSound);
+        audio.play();
       },
       // Bucle principal del juego
       startGameLoop() {
-        setInterval(() => {
-          this.moverEnemigos();
-          this.moverDisparos();
-          this.moverDisparosEnemigos();
-          this.detectarColisiones();
-          this.tiempo += 1; // Suma el tiempo en centésimas de segundo
+        this.gameLoopInterval = setInterval(() => {
+            if (!this.juegoActivo) return;
+            // Lógica del bucle del juego
+            this.moverEnemigos();
+            this.moverDisparos();
+            this.moverDisparosEnemigos();
+            this.detectarColisiones();
+            this.tiempo += 1; // Suma el tiempo en centésimas de segundo
         }, 1000 / 60); // 60 FPS
-      },
+       },
+
       // Mover disparos hacia arriba y eliminar los que salen de la pantalla
       moverDisparos() {
         this.disparos.forEach((disparo, index) => {
@@ -192,6 +240,8 @@
       // Iniciar ataques enemigos
       iniciarAtaquesEnemigos() {
         this.intervaloDisparos = setInterval(() => {
+          if (!this.juegoActivo) return;
+
           const navesVivas = this.enemigos.filter((enemy) => !enemy.destruido);
           if (navesVivas.length === 0) return;
   
@@ -265,6 +315,10 @@
             color: 'lightgreen',
           });
         }
+
+        // Reproducir sonido de disparo enemigo
+        const audio = new Audio(disparoEnemigoSound);
+        audio.play();
       },
       // Detectar colisiones entre disparos del jugador y enemigos, y entre disparos enemigos y la nave del jugador
       detectarColisiones() {
@@ -281,7 +335,18 @@
               this.enemigos.splice(enemyIndex, 1);
               this.disparos.splice(disparoIndex, 1);
               this.puntaje += 100; // Aumentar puntaje
+
+              // Reproducir sonido de colisión
+              const audio = new Audio(colisionSound);
+              audio.play();
+
+                // Detener el sonido después de 1 segundo
+                setTimeout(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }, 1000);
             }
+           
           });
         });
   
