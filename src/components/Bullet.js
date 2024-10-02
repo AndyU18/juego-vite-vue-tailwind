@@ -6,11 +6,13 @@ export default class Bullet {
   }
 
   draw(ctx) {
+    // Dibuja la bala en el canvas
     ctx.fillStyle = 'yellow'
     ctx.fillRect(this.x, this.y, 5, 10)  // Una bala pequeña
   }
 
   update() {
+    // Mueve la bala hacia arriba o hacia abajo según su velocidad
     this.y += this.velocidad
   }
 }
