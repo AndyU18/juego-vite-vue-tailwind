@@ -202,6 +202,8 @@
       startGameLoop() {
         this.gameLoopInterval = setInterval(() => {
             if (!this.juegoActivo) return;
+
+            console.log('Game loop is running'); // Añade este log
             // Lógica del bucle del juego
             this.moverEnemigos();
             this.moverDisparos();
