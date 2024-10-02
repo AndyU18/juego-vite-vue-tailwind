@@ -1,3 +1,4 @@
+<!-- Codigo Funcional y bueno no Responsivo-->
 <template>
   <div>
     <!-- Botón para regresar al menú -->
@@ -92,6 +93,23 @@
       window.removeEventListener('keydown', this.disparar);
     },
     methods: {
+        checkCollision() {
+            const naveJugador = this.$refs.naveJugador; // Asumiendo que tienes una referencia a la nave del jugador
+            const naveJugadorRect = naveJugador.getBoundingClientRect();
+
+            this.enemigos.forEach(enemigo => {
+                const enemigoRect = enemigo.getBoundingClientRect();
+                const distance = Math.sqrt(
+                Math.pow(enemigoRect.x - naveJugadorRect.x, 2) +
+                Math.pow(enemigoRect.y - naveJugadorRect.y, 2)
+                );
+
+                if (distance <= 9) {
+                this.juegoTerminado = true;
+                this.finalizarJuego();
+                }
+            });
+            },
         resetGameState() {
             this.nave = { x: 400, y: 820, width: 40, height: 40, velocidad: 5, color: 'white' };
             this.enemigos = [];

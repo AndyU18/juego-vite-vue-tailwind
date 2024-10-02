@@ -7,9 +7,15 @@ module.exports = {
     "./node_modules/kutty/**/*.js", // Agregar Kutty
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily:{
+        sixtyfourpixelated: ['SixtyFourPixelated', 'sans-serif'],
+      }
+    },
   },
   plugins: [
+    require('tailwindcss'),
+    require('autoprefixer'),
     require('flowbite/plugin'), // Agregar Flowbite como plugin
     require("kutty"), // Agregar Kutty como plugin
   ],

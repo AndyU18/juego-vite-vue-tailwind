@@ -13,6 +13,7 @@
     "flowbite": "^2.5.2",
     "gsap": "^3.12.5",
     "kutty": "^0.6.0",
+    "postcss-import": "^16.1.0",
     "typeit": "^8.8.5",
     "vue": "^3.4.37",
     "vue-router": "^4.4.5",

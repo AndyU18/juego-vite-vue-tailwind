@@ -31,7 +31,9 @@ const routes = [
     path: '/instructions',
     name: 'InstructionsPage',
     component: InstructionsPage
-  }
+  },
+  
+
   // Otras rutas pueden ir aquí
 ];
 
