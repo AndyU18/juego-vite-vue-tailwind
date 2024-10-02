@@ -1,3 +1,4 @@
+<!--    CODIGO FUNCIONAL 1  -->
 <template>
   <div class="game-container relative mx-auto" :style="{ width: '890px', height: '900px', backgroundColor: '#000' }">
     <!-- Pantalla del juego donde están las naves -->
@@ -21,7 +22,7 @@
         v-for="(enemy, index) in enemigos"
         :key="enemy.id"
         class="enemy absolute"
-        :style="{ left: enemy.x + 'px', top: enemy.y + 'px', width: '40px', height: '40px', backgroundColor: getEnemyColor(enemy.tipo) }"
+        :style="{ left: enemy.x + 'px', top: enemy.y + 'px', width: '35px', height: '35px', backgroundColor: getEnemyColor(enemy.tipo) }"
       ></div>
 
       <!-- Disparos de enemigos -->
