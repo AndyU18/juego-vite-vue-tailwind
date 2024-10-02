@@ -99,14 +99,16 @@
 
             this.enemigos.forEach(enemigo => {
                 const enemigoRect = enemigo.getBoundingClientRect();
-                const distance = Math.sqrt(
-                Math.pow(enemigoRect.x - naveJugadorRect.x, 2) +
-                Math.pow(enemigoRect.y - naveJugadorRect.y, 2)
+                //Verificar colision
+                const colision = !(
+                  enemigoRect.right < naveJugadorRect.left ||
+                  enemigoRect.left > naveJugadorRect.right ||
+                  enemigoRect.bottom < naveJugadorRect.top ||
+                  enemigoRect.top > naveJugadorRect.bottom
                 );
-
-                if (distance <= 9) {
-                this.juegoTerminado = true;
-                this.finalizarJuego();
+                if(colision){
+                  this.juegoTerminado();
+                  this.finalizarJuego();
                 }
             });
             },
@@ -204,7 +206,13 @@
             this.moverEnemigos();
             this.moverDisparos();
             this.moverDisparosEnemigos();
+            //detectar colisiones
             this.detectarColisiones();
+
+            //verificar colisiones con el jugador
+            this.enemigos.forEach((enemigo) =>{
+              this.checkCollision(this.nave, enemigo);
+            });
             this.tiempo += 1; // Suma el tiempo en centésimas de segundo
         }, 1000 / 60); // 60 FPS
        },
