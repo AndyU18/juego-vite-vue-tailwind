@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import InicioPage from '../views/InicioPage.vue'; // Importa tu nuevo componente
 import MenuPage from '../views/MenuPage.vue';
-import PlayPage from '../views/PlayPage.vue';
-import SettingsPage from '../views/SettingsPage.vue';
-import InstructionsPage from '../views/InstructionsPage.vue';
-
+import PlayPage from '../views/PlayPage.vue'; // De Edicion_base_kf (reemplaza Game.vue)
+import SettingsPage from '../views/SettingsPage.vue'; // De Edicion_base_kf (reemplaza Configuraciones.vue)
+import InstructionsPage from '../views/InstructionsPage.vue'; // Mantiene de Edicion_base_kf
+import Gracias from '../views/Gracias.vue'; // Mantiene el componente de Gracias de master
 
 const routes = [
   {
@@ -20,21 +20,23 @@ const routes = [
   {
     path: '/play',
     name: 'PlayPage',
-    component: PlayPage
+    component: PlayPage // Mantiene PlayPage de Edicion_base_kf
   },
   {
     path: '/settings',
     name: 'SettingsPage',
-    component: SettingsPage
+    component: SettingsPage // Mantiene SettingsPage de Edicion_base_kf
   },
   {
     path: '/instructions',
     name: 'InstructionsPage',
-    component: InstructionsPage
+    component: InstructionsPage // Mantiene InstructionsPage de Edicion_base_kf
   },
-  
-
-  // Otras rutas pueden ir aquí
+  {
+    path: '/gracias',
+    name: 'Gracias',
+    component: Gracias // Mantiene el componente de Gracias de master
+  }
 ];
 
 const router = createRouter({

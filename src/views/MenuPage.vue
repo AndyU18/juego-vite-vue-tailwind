@@ -49,14 +49,26 @@
         <i class='bx bx-exit'></i>
       </template>
     </vs-button>
+
+    <!-- Botones de control para la música -->
+    <div class="mt-4">
+      <button @click="playMusic" class="bg-green-500 text-white px-4 py-2 rounded">Play Música</button>
+      <button @click="pauseMusic" class="bg-red-500 text-white px-4 py-2 rounded">Pause Música</button>
+    </div>
+
+    <!-- Reproductor de música oculto -->
+    <audio id="musicaFondo" ref="musicaFondo" src="@/assets/musica.mp3" loop></audio>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';  // Usa useRouter para manejar las rutas
+// Importa useRouter desde vue-router
+import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';  // Importa funciones de Vue
 
 const router = useRouter();  // Obtén una instancia del router
 
+// Funciones para manejar la navegación
 const handlePlay = () => {
   router.push('/play');  // Redirige a la página de juego
 };
@@ -72,6 +84,22 @@ const handleHowToPlay = () => {
 const handleExit = () => {
   router.push('/');  // Redirige a la página de inicio
 };
+
+// Refs para el audio
+const musicaFondo = ref(null); 
+
+const playMusic = () => {
+  musicaFondo.value.play();
+};
+
+const pauseMusic = () => {
+  musicaFondo.value.pause();
+};
+
+// Al cargar la página, la música se reproduce automáticamente
+onMounted(() => {
+  musicaFondo.value.play();
+});
 </script>
 
 <style scoped>
@@ -89,5 +117,15 @@ const handleExit = () => {
 
 .menu-button {
   margin: 18px 0; /* Ajusta este valor para aumentar o disminuir el espaciado */
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
 }
 </style>
