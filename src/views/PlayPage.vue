@@ -6,7 +6,7 @@
       Regresar al Menú
     </button>
 
-    <div class="game-container relative mx-auto" :style="{ width: '890px', height: '900px', backgroundColor: '#000' }">
+    <div class="game-container relative mx-auto" :style="{ width: '890px', height: '720px', backgroundColor: '#000' }">
       <!-- Pantalla del juego donde están las naves -->
       <div class="game-area relative mx-auto" :style="{ width: '100%', height: '100%' }">
         <!-- Nave del jugador -->
@@ -57,12 +57,12 @@
   export default {
     data() {
       return {
-        nave: { x: 400, y: 820, width: 40, height: 40, velocidad: 5, color: 'white' }, // Ajustado para estar un poco arriba del borde inferior
+        nave: { x: 400, y: 720, width: 40, height: 40, velocidad: 5, color: 'white' }, // Ajustado para estar un poco arriba del borde inferior
         enemigos: [],
         disparos: [], // Almacena los disparos del jugador
         disparosEnemigos: [], // Almacena los disparos de los enemigos
         vidas: 3,
-        tiempo: 0,
+        tiempo: -1,
         puntaje: 0,
         direccionEnemigos: 1, // 1 = derecha, -1 = izquierda
         intervaloDisparos: null, // Control para los disparos

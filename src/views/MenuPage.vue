@@ -57,7 +57,7 @@
     </div>
 
     <!-- Reproductor de música oculto -->
-    <audio id="musicaFondo" ref="musicaFondo" src="@/assets/musica.mp3" loop></audio>
+    <audio id="musicaFondo" ref="musicaFondo" src="../assets/sounds/musica.mp3" loop></audio>
   </div>
 </template>
 
